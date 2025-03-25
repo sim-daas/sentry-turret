@@ -25,7 +25,7 @@ def main():
 
                 # Convert input to integer and validate range
                 pulse_value = int(pulse)
-                if 19 <= pulse_value <= 170:
+                if 10 <= pulse_value <= 170:
                     # Send the pulse width value to Arduino
                     ser.write(f"{pulse_value}\n".encode())
 
