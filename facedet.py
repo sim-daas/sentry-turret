@@ -93,8 +93,8 @@ width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 print(f"Default resolution: {width}x{height}")
 
-desired_width = 1280
-desired_height = 960
+desired_width = 960
+desired_height = 1280
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, desired_width)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, desired_height)
 
