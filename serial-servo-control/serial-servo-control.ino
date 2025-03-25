@@ -1,4 +1,4 @@
-/*
+
 #include <Servo.h>
 
 Servo myservo;  // create Servo object to control a servo
@@ -22,7 +22,7 @@ void loop() {
   myservo.write(val);                 // constantly write the current position value
   delay(15);                          // small delay for stability
 }
-*/
+/*
 
 #include <Servo.h>
 
@@ -118,3 +118,4 @@ void computePID(double deltaTime) {
   // Save error for next iteration
   lastError = error;
 }
+*/
