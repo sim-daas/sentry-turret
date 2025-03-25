@@ -1,18 +1,23 @@
 #include <Servo.h>
 
 Servo myservo;  // create Servo object to control a servo
-int val;    // variable to read the value from the serial input
+int val = 90;   // default position (middle)
+int newVal;     // new value from serial
 
 void setup() {
-  Serial.begin(9600);  // initialize serial communication
-  myservo.attach(9);  // attaches the servo on pin 9 to the Servo object
+  Serial.begin(9600);       // initialize serial communication
+  myservo.attach(9);        // attaches the servo on pin 9 to the Servo object
+  myservo.write(val);       // set initial position
 }
 
 void loop() {
   if (Serial.available() > 0) {
-    val = Serial.parseInt();            // read the value from the serial input
-    val = constrain(val, 10, 170);       // constrain the value to be between 0 and 180
-    myservo.write(val);                 // sets the servo position according to the input value
-    delay(15);                          // waits for the servo to get there
+    newVal = Serial.parseInt();       // read the value from the serial input
+    if (newVal >= 10 && newVal <= 170) {
+      val = newVal;                   // only update val if in valid range
+    }
   }
+  
+  myservo.write(val);                 // constantly write the current position value
+  delay(15);                          // small delay for stability
 }
