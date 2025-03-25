@@ -31,9 +31,6 @@ def main():
 
                     # Read and print the response from Arduino
                     time.sleep(0.1)  # Wait for Arduino to respond
-                    if ser.in_waiting:
-                        response = ser.readline().decode('utf-8').strip()
-                        print(f"Arduino response: {response}")
                 else:
                     print("Invalid value! Please enter a number between 500 and 2500.")
 
