@@ -6,7 +6,6 @@ import math
 
 
 def get_face_boxes(frame, model):
-    """Process a frame and return face detection boxes for further processing."""
     results = model(frame)
     boxes = []
     
@@ -59,9 +58,7 @@ def setup_servo_connection(port='/dev/ttyACM0', baud_rate=9600):
     try:
         ser = serial.Serial(port, baud_rate, timeout=1)
         print(f"Connected to Arduino on {port}")
-        # Allow time for the Arduino to reset after serial connection
         time.sleep(2)
-        # Clear any data in the buffer
         ser.reset_input_buffer()
         return ser
     except serial.SerialException as e:
@@ -77,12 +74,9 @@ def send_servo_command(ser, angle):
         return False
         
     try:
-        # Validate angle range
         if 10 <= angle <= 170:
-            # Add newline character to ensure proper command parsing
             command = f"{int(angle)}\n" 
             ser.write(command.encode())
-            # Wait for Arduino to process
             time.sleep(0.05)
             return True
         else:
@@ -92,18 +86,14 @@ def send_servo_command(ser, angle):
         print(f"Error sending command: {e}")
         return False
 
-# Keep model initialization as is
 model = YOLO("yolov11s-face.pt")   
 
-xtheta = math.tan(math.radians(28))
+xtheta = math.tan(math.radians(30))
 ytheta = math.tan(22)
 
-# Remove the smoothing factor and last_angle - Arduino handles this
-# Keep rate limiting to avoid flooding the serial connection
 last_command_time = 0
-command_interval = 0.05  # Only send commands every 50ms
+command_interval = 0.05   
 
-# Initialize serial connection for servo control
 servo_connection = setup_servo_connection()
 
 cap = cv2.VideoCapture(0)
@@ -113,19 +103,14 @@ while cap.isOpened():
     if not ret:
         break
 
-    # Get face boxes for further processing
     face_boxes = get_face_boxes(frame, model)
     
-    # Draw boxes on the frame
     frame = draw_boxes(frame, face_boxes)
     
-    # Only process if faces are detected
     current_time = time.time()
     if face_boxes and (current_time - last_command_time) >= command_interval:
         angle = logic(face_boxes)
         
-        # Remove smoothing code since Arduino handles this
-        # Just send the calculated angle directly
         angle_to_send = int(round(angle))
         
         print(f"Sending angle: {angle_to_send}")
@@ -140,7 +125,6 @@ while cap.isOpened():
 cap.release()
 cv2.destroyAllWindows()
 
-# Close the serial connection if it's open
 if 'servo_connection' in locals() and servo_connection and servo_connection.is_open:
     servo_connection.close()
     print("Serial connection closed.")
