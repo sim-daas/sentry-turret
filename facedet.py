@@ -69,15 +69,9 @@ def setup_servo_connection(port='/dev/ttyACM0', baud_rate=9600):
         print("Make sure Arduino is connected and the port is correct.")
         return None
 
-def send_servo_command(ser):
+def send_servo_command(ser, angle):
     """Send a servo position command to the Arduino.
     """
-    global oldang, angle
-    if math.fabs(oldang - angle) <= 5:
-        angle = oldang
-    else:
-        oldang = angle
-        
     if not ser or not ser.is_open:
         print("Serial connection not available")
         return False
@@ -103,8 +97,7 @@ xtheta = math.tan(math.radians(28))
 ytheta = math.tan(22)
 # Initialize serial connection for servo control
 servo_connection = setup_servo_connection()
-angle = 90
-oldang = 90
+
 cap = cv2.VideoCapture(0)
 
 while cap.isOpened():
@@ -120,7 +113,7 @@ while cap.isOpened():
     
     angle = logic(face_boxes)
     print(angle) 
-    send_servo_command(servo_connection)
+    send_servo_command(servo_connection, angle)
      
     cv2.imshow("YOLO Detection", frame)
 
