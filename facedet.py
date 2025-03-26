@@ -66,7 +66,7 @@ def send_servo_command(ser, angle):
         # Validate angle range (assuming 10-170 is valid range from serial-test.py)
         if 10 <= angle <= 170:
             # Send the angle value to Arduino
-            ser.write(f"{angle}\n".encode())
+            ser.write(f"{angle}".encode())
             time.sleep(0.02)  # Wait for Arduino to process
             return True
         else:
