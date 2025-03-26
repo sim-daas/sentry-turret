@@ -61,7 +61,6 @@ def setup_servo_connection(port='/dev/ttyACM0', baud_rate=9600):
         print(f"Connected to Arduino on {port}")
         # Allow time for the Arduino to reset after serial connection
         time.sleep(2)
-        ser.write(b"90")
         # Clear any data in the buffer
         ser.reset_input_buffer()
         return ser
@@ -82,7 +81,7 @@ def send_servo_command(ser, angle):
         if 10 <= angle <= 170:
             # Send the angle value to Arduino
             ser.write(f"{angle}".encode())
-            time.sleep(0.02)  # Wait for Arduino to process
+            time.sleep(0.1)  # Wait for Arduino to process
             return True
         else:
             print(f"Invalid angle value: {angle}. Must be between 10 and 170.")
