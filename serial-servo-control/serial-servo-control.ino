@@ -143,9 +143,7 @@ void loop() {
   // Check for new target position from serial
   if (Serial.available() > 0) {
     int newTarget = Serial.parseInt();  // Read the value from serial input
-    if (newTarget >= 10 && newTarget <= 170) {
-      targetPos = newTarget;            // Update target position if in valid range
-    }
+    targetPos = newTarget;
   }
 
   // Update servo position at regular intervals

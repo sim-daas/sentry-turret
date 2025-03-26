@@ -23,9 +23,11 @@ def get_face_boxes(frame, model):
     
     return boxes
 
-
-
-
+def logic(box):
+    x1, y1, x2, y2 = box['coords']
+    
+    
+    
 def draw_boxes(frame, boxes):
     """Draw bounding boxes and labels on the frame."""
     for box in boxes:
@@ -55,13 +57,6 @@ def setup_servo_connection(port='/dev/ttyACM0', baud_rate=9600):
 
 def send_servo_command(ser, angle):
     """Send a servo position command to the Arduino.
-    
-    Parameters:
-    - ser: Serial connection object
-    - angle: Angle value between 10 and 170 degrees
-    
-    Returns:
-    - bool: True if command was sent successfully, False otherwise
     """
     if not ser or not ser.is_open:
         print("Serial connection not available")
@@ -72,7 +67,7 @@ def send_servo_command(ser, angle):
         if 10 <= angle <= 170:
             # Send the angle value to Arduino
             ser.write(f"{angle}\n".encode())
-            time.sleep(0.1)  # Wait for Arduino to process
+            time.sleep(0.05)  # Wait for Arduino to process
             return True
         else:
             print(f"Invalid angle value: {angle}. Must be between 10 and 170.")
@@ -88,10 +83,6 @@ model = YOLO("yolov11s-face.pt")
 servo_connection = setup_servo_connection()
 
 cap = cv2.VideoCapture(0)
-desired_width = 1280
-desired_height = 720
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, desired_width)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, desired_height)
 
 while cap.isOpened():
     ret, frame = cap.read()   
