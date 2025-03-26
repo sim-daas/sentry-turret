@@ -120,7 +120,7 @@ while cap.isOpened():
     
     angle = logic(face_boxes)
     print(angle) 
-    send_servo_command(servo_connection, angle)
+    send_servo_command(servo_connection)
      
     cv2.imshow("YOLO Detection", frame)
 
