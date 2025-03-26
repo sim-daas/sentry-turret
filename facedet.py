@@ -25,8 +25,9 @@ def get_face_boxes(frame, model):
     
     return boxes
 
-def logic(box):
+def logic(boxes):
     global xtheta, ytheta
+    box = boxes[0]
     x1, y1, x2, y2 = box['coords']
     cent = (x1 + x2) / 2
     if cent >= 320:
