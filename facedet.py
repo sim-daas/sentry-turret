@@ -95,7 +95,7 @@ def send_servo_command(ser, angle):
 # Keep model initialization as is
 model = YOLO("yolov11s-face.pt")   
 
-xtheta = math.tan(28)
+xtheta = math.tan(math.radians(28))
 ytheta = math.tan(22)
 # Initialize serial connection for servo control
 servo_connection = setup_servo_connection()
