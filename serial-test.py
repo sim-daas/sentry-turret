@@ -27,7 +27,7 @@ def main():
                 pulse_value = int(pulse)
                 if 10 <= pulse_value <= 170:
                     # Send the pulse width value to Arduino
-                    ser.write(f"{pulse_value}\n".encode())
+                    ser.write(f"{pulse_value}".encode())
 
                     # Read and print the response from Arduino
                     time.sleep(0.1)  # Wait for Arduino to respond
