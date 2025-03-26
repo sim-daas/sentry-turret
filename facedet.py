@@ -47,6 +47,7 @@ def setup_servo_connection(port='/dev/ttyACM0', baud_rate=9600):
         print(f"Connected to Arduino on {port}")
         # Allow time for the Arduino to reset after serial connection
         time.sleep(2)
+        ser.write(b"90")
         # Clear any data in the buffer
         ser.reset_input_buffer()
         return ser
