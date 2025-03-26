@@ -59,6 +59,7 @@ def setup_servo_connection(port='/dev/ttyACM0', baud_rate=9600):
         ser = serial.Serial(port, baud_rate, timeout=1)
         print(f"Connected to Arduino on {port}")
         time.sleep(2)
+        ser.write(f"{int(90)}")
         ser.reset_input_buffer()
         return ser
     except serial.SerialException as e:
@@ -75,7 +76,7 @@ def send_servo_command(ser, angle):
         
     try:
         if 10 <= angle <= 170:
-            command = f"{int(angle)}\n" 
+            command = f"{int(angle)}" 
             ser.write(command.encode())
             time.sleep(0.05)
             return True
