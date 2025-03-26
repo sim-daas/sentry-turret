@@ -59,7 +59,6 @@ def setup_servo_connection(port='/dev/ttyACM0', baud_rate=9600):
         ser = serial.Serial(port, baud_rate, timeout=1)
         print(f"Connected to Arduino on {port}")
         time.sleep(0.5)
-        ser.write(f"{b"90"}")
         ser.reset_input_buffer()
         return ser
     except serial.SerialException as e:
