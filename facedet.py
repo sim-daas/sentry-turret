@@ -67,7 +67,7 @@ def send_servo_command(ser, angle):
         if 10 <= angle <= 170:
             # Send the angle value to Arduino
             ser.write(f"{angle}\n".encode())
-            time.sleep(0.05)  # Wait for Arduino to process
+            time.sleep(0.02)  # Wait for Arduino to process
             return True
         else:
             print(f"Invalid angle value: {angle}. Must be between 10 and 170.")
