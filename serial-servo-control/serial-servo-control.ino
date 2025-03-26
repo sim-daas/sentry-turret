@@ -130,7 +130,7 @@ unsigned long lastMoveTime; // Time of last position update
 // Motion control parameters
 const int UPDATE_INTERVAL = 15;    // Time between position updates (milliseconds)
 const float MAX_SPEED = 2.0;       // Maximum speed in degrees per update interval
-float Kp = 0.5;                    // Proportional gain - controls speed based on distance
+float Kp = 0.3;                    // Proportional gain - controls speed based on distance
 
 void setup() {
   Serial.begin(9600);              // Initialize serial communication
