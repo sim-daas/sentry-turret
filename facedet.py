@@ -88,7 +88,7 @@ def send_servo_command(ser, angle):
 
 model = YOLO("yolov11s-face.pt")   
 
-xtheta = math.tan(math.radians(33))
+xtheta = math.tan(math.radians(40))
 ytheta = math.tan(22)
 
 last_command_time = 0
