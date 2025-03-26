@@ -34,12 +34,12 @@ def logic(boxes):
         cent -= 320
         ang = math.atan2(xtheta*cent, 320)
         
-        return ang
+        return math.degrees(ang)
     else:
         cent = 320 - cent
         ang = math.atan2(xtheta*cent, 320)
-        
-        return ang
+
+        return math.degrees(ang)
     
     
 def draw_boxes(frame, boxes):
