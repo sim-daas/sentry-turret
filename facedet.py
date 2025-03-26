@@ -2,6 +2,8 @@ import cv2
 from ultralytics import YOLO
 import serial
 import time
+import math
+
 
 def get_face_boxes(frame, model):
     """Process a frame and return face detection boxes for further processing."""
@@ -24,8 +26,19 @@ def get_face_boxes(frame, model):
     return boxes
 
 def logic(box):
+    global xtheta, ytheta
     x1, y1, x2, y2 = box['coords']
-    
+    cent = (x1 + x2) / 2
+    if cent >= 320:
+        cent -= 320
+        ang = math.atan2(xtheta*cent, 320)
+        
+        return ang
+    else:
+        cent = 320 - cent
+        ang = math.atan2(xtheta*cent, 320)
+        
+        return ang
     
     
 def draw_boxes(frame, boxes):
@@ -80,6 +93,8 @@ def send_servo_command(ser, angle):
 # Keep model initialization as is
 model = YOLO("yolov11s-face.pt")   
 
+xtheta = math.tan(28)
+ytheta = math.tan(22)
 # Initialize serial connection for servo control
 servo_connection = setup_servo_connection()
 
