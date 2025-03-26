@@ -77,11 +77,13 @@ def send_servo_command(ser, angle):
         return False
         
     try:
-        # Validate angle range (assuming 10-170 is valid range from serial-test.py)
+        # Validate angle range
         if 10 <= angle <= 170:
-            # Send the angle value to Arduino
-            ser.write(f"{angle}".encode())
-            time.sleep(0.1)  # Wait for Arduino to process
+            # Add newline character to ensure proper command parsing
+            command = f"{int(angle)}\n" 
+            ser.write(command.encode())
+            # Wait for Arduino to process
+            time.sleep(0.05)
             return True
         else:
             print(f"Invalid angle value: {angle}. Must be between 10 and 170.")
@@ -95,6 +97,12 @@ model = YOLO("yolov11s-face.pt")
 
 xtheta = math.tan(math.radians(28))
 ytheta = math.tan(22)
+
+# Remove the smoothing factor and last_angle - Arduino handles this
+# Keep rate limiting to avoid flooding the serial connection
+last_command_time = 0
+command_interval = 0.05  # Only send commands every 50ms
+
 # Initialize serial connection for servo control
 servo_connection = setup_servo_connection()
 
@@ -111,9 +119,18 @@ while cap.isOpened():
     # Draw boxes on the frame
     frame = draw_boxes(frame, face_boxes)
     
-    angle = logic(face_boxes)
-    print(angle) 
-    send_servo_command(servo_connection, angle)
+    # Only process if faces are detected
+    current_time = time.time()
+    if face_boxes and (current_time - last_command_time) >= command_interval:
+        angle = logic(face_boxes)
+        
+        # Remove smoothing code since Arduino handles this
+        # Just send the calculated angle directly
+        angle_to_send = int(round(angle))
+        
+        print(f"Sending angle: {angle_to_send}")
+        send_servo_command(servo_connection, angle_to_send)
+        last_command_time = current_time
      
     cv2.imshow("YOLO Detection", frame)
 
