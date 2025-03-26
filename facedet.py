@@ -30,17 +30,16 @@ def logic(boxes):
     box = boxes[0]
     x1, y1, x2, y2 = box['coords']
     cent = (x1 + x2) / 2
-    print(x1, x2, cent)
     if cent >= 320:
         cent -= 320
         ang = math.atan2(xtheta*cent, 320)
         
-        return math.degrees(ang)
+        return 90+math.degrees(ang)
     else:
         cent = 320 - cent
         ang = math.atan2(xtheta*cent, 320)
 
-        return math.degrees(ang)
+        return 90 - math.degrees(ang)
     
     
 def draw_boxes(frame, boxes):
@@ -114,7 +113,7 @@ while cap.isOpened():
     frame = draw_boxes(frame, face_boxes)
     
     angle = logic(face_boxes)
-     
+    print(angle) 
     send_servo_command(servo_connection, angle)
      
     cv2.imshow("YOLO Detection", frame)
