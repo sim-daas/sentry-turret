@@ -111,9 +111,9 @@ while cap.isOpened():
     # Draw boxes on the frame
     frame = draw_boxes(frame, face_boxes)
     
-   # angle = logic(face_boxes)
+    angle = logic(face_boxes)
      
-   # send_servo_command(servo_connection, angle)
+    send_servo_command(servo_connection, angle)
      
     cv2.imshow("YOLO Detection", frame)
 
