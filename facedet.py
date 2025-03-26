@@ -30,6 +30,7 @@ def logic(boxes):
     box = boxes[0]
     x1, y1, x2, y2 = box['coords']
     cent = (x1 + x2) / 2
+    print(x1, x2, cent)
     if cent >= 320:
         cent -= 320
         ang = math.atan2(xtheta*cent, 320)
