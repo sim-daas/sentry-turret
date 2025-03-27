@@ -11,9 +11,10 @@ const int SERVO_MAX = 170;       // Maximum servo angle
 const int COMMAND_TIMEOUT = 100; // Timeout for receiving complete commands (ms)
 
 // Motion control parameters
-const int UPDATE_INTERVAL = 20; // Time between position updates (milliseconds)
-const float MAX_SPEED = 1.0;    // Maximum speed in degrees per update interval
-float Kp = 0.25;                // Proportional gain - reduced to prevent oscillation
+const int UPDATE_INTERVAL = 20;     // Time between position updates (milliseconds)
+const float MAX_SPEED = 1.0;        // Maximum speed in degrees per update interval
+float Kp = 0.25;                    // Proportional gain - reduced to prevent oscillation
+const float MIN_ANGLE_CHANGE = 4.0; // Minimum change in angle to process (transferred from Python)
 
 // Buffer for incoming data
 String inputBuffer = "";
@@ -63,8 +64,8 @@ void loop()
       // Constrain the target within safe limits
       newTarget = constrain(newTarget, SERVO_MIN, SERVO_MAX);
 
-      // Only update if the change is significant
-      if (abs(newTarget - targetPos) > MOVE_THRESHOLD)
+      // Only update if the change is significant (enhanced threshold check)
+      if (abs(newTarget - targetPos) >= MIN_ANGLE_CHANGE)
       {
         targetPos = newTarget;
       }

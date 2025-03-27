@@ -107,7 +107,6 @@ ytheta = math.tan(22)
 last_command_time = 0
 command_interval = 0.15  # Increased interval to reduce command frequency
 prev_angle = None  # To store previous angle for smoothing
-min_angle_change = 2.0  # Minimum change in angle to send a new command
 
 servo_connection = setup_servo_connection()
 
@@ -126,12 +125,11 @@ while cap.isOpened():
     if face_boxes and (current_time - last_command_time) >= command_interval:
         angle = logic(face_boxes, prev_angle)
         
-        # Only send command if the angle has changed significantly
-        if prev_angle is None or abs(angle - prev_angle) >= min_angle_change:
-            print(f"Sending angle: {angle:.1f}")
-            send_servo_command(servo_connection, angle)
-            prev_angle = angle
-            last_command_time = current_time
+        # Always send the angle at regular intervals - let Arduino decide if it's significant
+        print(f"Sending angle: {angle:.1f}")
+        send_servo_command(servo_connection, angle)
+        prev_angle = angle
+        last_command_time = current_time
      
     cv2.imshow("YOLO Detection", frame)
 
