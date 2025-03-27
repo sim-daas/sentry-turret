@@ -62,7 +62,7 @@ def setup_servo_connection(port='/dev/ttyACM0', baud_rate=9600):
         ser.reset_input_buffer()
         return ser
     except serial.SerialException as e:
-        print(f"Error opening serial port: {e}")
+        print(f"Error opening serial port:{e}")
         print("Make sure Arduino is connected and the port is correct.")
         return None
 
