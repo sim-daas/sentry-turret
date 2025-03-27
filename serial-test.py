@@ -17,7 +17,7 @@ def main():
         while True:
             # Ask user for pulse width value
             try:
-                pulse = input("Enter pulse width (500-2500 μs) or 'q' to quit: ")
+                pulse = input("Enter angle (10-170 degrees) or 'q' to quit: ")
 
                 # Check if user wants to quit
                 if pulse.lower() == 'q':
@@ -26,13 +26,13 @@ def main():
                 # Convert input to integer and validate range
                 pulse_value = int(pulse)
                 if 10 <= pulse_value <= 170:
-                    # Send the pulse width value to Arduino
-                    ser.write(f"{pulse_value}".encode())
+                    # Send the angle value to Arduino with newline terminator
+                    ser.write(f"{pulse_value}\n".encode())
 
                     # Read and print the response from Arduino
                     time.sleep(0.1)  # Wait for Arduino to respond
                 else:
-                    print("Invalid value! Please enter a number between 500 and 2500.")
+                    print("Invalid value! Please enter a number between 10 and 170.")
 
             except ValueError:
                 print("Please enter a valid number.")

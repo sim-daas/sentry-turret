@@ -24,21 +24,32 @@ def get_face_boxes(frame, model):
     
     return boxes
 
-def logic(boxes):
-    global xtheta, ytheta
+def logic(boxes, prev_angle=None):
+    """Calculate servo angle based on face position with optional smoothing."""
+    global xtheta
     box = boxes[0]
     x1, y1, x2, y2 = box['coords']
     cent = (x1 + x2) / 2
+    
     if cent >= 320:
         cent -= 320
         ang = math.atan2(xtheta*cent, 320)
-        
-        return 90+math.degrees(ang)
+        new_angle = 90+math.degrees(ang)
     else:
         cent = 320 - cent
         ang = math.atan2(xtheta*cent, 320)
-
-        return 90 - math.degrees(ang)
+        new_angle = 90 - math.degrees(ang)
+    
+    # Constrain angle within servo limits
+    new_angle = max(10, min(170, new_angle))
+    
+    # Apply smoothing if we have a previous angle
+    if prev_angle is not None:
+        # Simple exponential smoothing
+        smoothing_factor = 0.3  # Lower values = more smoothing
+        new_angle = prev_angle + smoothing_factor * (new_angle - prev_angle)
+    
+    return new_angle
     
     
 def draw_boxes(frame, boxes):
@@ -75,9 +86,11 @@ def send_servo_command(ser, angle):
         
     try:
         if 10 <= angle <= 170:
-            command = f"{int(angle)}" 
+            # Format command with newline for Arduino to parse properly
+            command = f"{int(angle)}\n" 
             ser.write(command.encode())
-            time.sleep(0.05)
+            # Wait a bit for the command to be processed
+            time.sleep(0.02)
             return True
         else:
             print(f"Invalid angle value: {angle}. Must be between 10 and 170.")
@@ -92,7 +105,9 @@ xtheta = math.tan(math.radians(40))
 ytheta = math.tan(22)
 
 last_command_time = 0
-command_interval = 0.05   
+command_interval = 0.15  # Increased interval to reduce command frequency
+prev_angle = None  # To store previous angle for smoothing
+min_angle_change = 2.0  # Minimum change in angle to send a new command
 
 servo_connection = setup_servo_connection()
 
@@ -109,11 +124,14 @@ while cap.isOpened():
     
     current_time = time.time()
     if face_boxes and (current_time - last_command_time) >= command_interval:
-        angle = logic(face_boxes)
+        angle = logic(face_boxes, prev_angle)
         
-        print(f"Sending angle: {angle}")
-        send_servo_command(servo_connection, angle)
-        last_command_time = current_time
+        # Only send command if the angle has changed significantly
+        if prev_angle is None or abs(angle - prev_angle) >= min_angle_change:
+            print(f"Sending angle: {angle:.1f}")
+            send_servo_command(servo_connection, angle)
+            prev_angle = angle
+            last_command_time = current_time
      
     cv2.imshow("YOLO Detection", frame)
 
