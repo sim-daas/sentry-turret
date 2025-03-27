@@ -12,7 +12,7 @@ const int COMMAND_TIMEOUT = 100; // Timeout for receiving complete commands (ms)
 
 // Motion control parameters
 const int UPDATE_INTERVAL = 20;     // Time between position updates (milliseconds)
-const float MAX_SPEED = 1.0;        // Maximum speed in degrees per update interval
+const float MAX_SPEED = 2.0;        // Maximum speed in degrees per update interval
 float Kp = 0.25;                    // Proportional gain - reduced to prevent oscillation
 const float MIN_ANGLE_CHANGE = 4.0; // Minimum change in angle to process (transferred from Python)
 
