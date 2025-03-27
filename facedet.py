@@ -33,11 +33,11 @@ def logic(boxes, prev_angle=None):
     
     if cent >= 320:
         cent -= 320
-        ang = math.atan2(xtheta*cent, 320)
+        ang = math.atan2(xtheta*cent, 220)
         new_angle = 90+math.degrees(ang)
     else:
         cent = 320 - cent
-        ang = math.atan2(xtheta*cent, 320)
+        ang = math.atan2(xtheta*cent, 220)
         new_angle = 90 - math.degrees(ang)
     
     # Constrain angle within servo limits
