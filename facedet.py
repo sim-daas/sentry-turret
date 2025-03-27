@@ -111,10 +111,8 @@ while cap.isOpened():
     if face_boxes and (current_time - last_command_time) >= command_interval:
         angle = logic(face_boxes)
         
-        angle_to_send = int(round(angle))
-        
-        print(f"Sending angle: {angle_to_send}")
-        send_servo_command(servo_connection, angle_to_send)
+        print(f"Sending angle: {angle}")
+        send_servo_command(servo_connection, angle)
         last_command_time = current_time
      
     cv2.imshow("YOLO Detection", frame)
