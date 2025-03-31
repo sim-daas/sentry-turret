@@ -193,7 +193,7 @@ def draw_boxes(frame, boxes, track_history):
     return frame
 
 
-def setup_servo_connection(port='/dev/ttyACM0', baud_rate=9600):
+def setup_servo_connection(port='/dev/ttyACM1', baud_rate=9600):
     """Establish a serial connection to the Arduino controlling the servos."""
     try:
         ser = serial.Serial(port, baud_rate, timeout=1)
