@@ -235,7 +235,7 @@ def main():
     xtheta = math.tan(math.radians(40))
     ytheta = math.tan(22)
     
-    model = YOLO("yolov11s-face.pt")
+    model = YOLO("yolov11n-face.pt")
     
     last_command_time = 0
     command_interval = 0.01  # Interval between servo commands
