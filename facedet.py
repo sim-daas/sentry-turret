@@ -238,7 +238,7 @@ def main():
     model = YOLO("yolov11s-face.pt")
     
     last_command_time = 0
-    command_interval = 0.1  # Interval between servo commands
+    command_interval = 0.04  # Interval between servo commands
     prev_angle = None  # For angle smoothing
     
     # Track history for visualization
