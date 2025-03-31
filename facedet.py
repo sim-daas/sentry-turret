@@ -219,7 +219,7 @@ def send_servo_command(ser, angle):
             command = f"{int(angle)}\n" 
             ser.write(command.encode())
             # Wait a bit for the command to be processed
-            time.sleep(0.02)
+            time.sleep(0.005)
             return True
         else:
             print(f"Invalid angle value: {angle}. Must be between 10 and 170.")
@@ -238,7 +238,7 @@ def main():
     model = YOLO("yolov11s-face.pt")
     
     last_command_time = 0
-    command_interval = 0.04  # Interval between servo commands
+    command_interval = 0.01  # Interval between servo commands
     prev_angle = None  # For angle smoothing
     
     # Track history for visualization
