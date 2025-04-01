@@ -84,7 +84,7 @@ pip install -r requirements.txt
 Download the YOLOv11 face detection model:
 
 ```bash
-wget https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov11n-face.pt
+wget https://github.com/akanametov/yolo-face/releases/download/v0.0.0/yolov11n-face.pt
 ```
 
 Alternative models (depending on your needs):
