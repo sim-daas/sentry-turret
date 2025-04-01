@@ -79,15 +79,6 @@ Install the required packages:
 pip install -r requirements.txt
 ```
 
-If the requirements.txt file doesn't exist, create it with:
-
-```
-opencv-python>=4.5.0
-numpy>=1.19.0
-pyserial>=3.5
-ultralytics>=0.10.0
-```
-
 ### 3. Download YOLO Models
 
 Download the YOLOv11 face detection model:
