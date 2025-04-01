@@ -245,6 +245,15 @@ def main():
     track_history = defaultdict(lambda: [])
     max_history = 30  # Maximum history points to keep
     
+    # FPS calculation variables
+    fps = 0
+    frame_count = 0
+    start_time = time.time()
+    fps_update_interval = 0.5  # Update FPS display every half second
+    
+    # Frame flip control
+    flip_frame = True  # Default: no flipping
+    
     servo_connection = setup_servo_connection()
     
     cap = cv2.VideoCapture('/dev/video2')
@@ -254,6 +263,10 @@ def main():
     if not ret:
         print("Failed to capture first frame from camera")
         return
+    
+    # Apply flip if enabled
+    if flip_frame:
+        first_frame = cv2.flip(first_frame, 1)  # 1 for horizontal flip
     
     # Allow user to select a face/object to track
     selected_object = select_face_to_track(first_frame, model)
@@ -265,6 +278,20 @@ def main():
         ret, frame = cap.read()   
         if not ret:
             break
+        
+        # Apply flip if enabled
+        if flip_frame:
+            frame = cv2.flip(frame, 1)  # 1 for horizontal flip
+        
+        # Update frame count for FPS calculation
+        frame_count += 1
+        elapsed_time = time.time() - start_time
+        
+        # Update FPS calculation every interval
+        if elapsed_time > fps_update_interval:
+            fps = frame_count / elapsed_time
+            frame_count = 0
+            start_time = time.time()
         
         # Get detections with tracking if enabled
         boxes, track_ids = get_face_boxes(frame, model, tracking=tracking_enabled)
@@ -294,10 +321,17 @@ def main():
             prev_angle = angle
             last_command_time = current_time
         
-        # Display tracking status
+        # Display tracking status and FPS
         status = "Tracking: ON" if tracking_enabled else "Tracking: OFF"
         cv2.putText(frame, status, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 
                     0.7, (0, 0, 255), 2)
+        
+        # Display FPS in top right corner
+        fps_text = f"FPS: {fps:.1f}"
+        fps_text_size = cv2.getTextSize(fps_text, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2)[0]
+        fps_x = frame.shape[1] - fps_text_size[0] - 10  # 10 pixels from right edge
+        cv2.putText(frame, fps_text, (fps_x, 30), cv2.FONT_HERSHEY_SIMPLEX, 
+                    0.7, (0, 255, 255), 2)  # Yellow color for visibility
         
         cv2.imshow("Object Tracking", frame)
         
@@ -310,6 +344,9 @@ def main():
         elif key == ord('r'):  # Reset selected object
             selected_object = None
             print("Reset selected object - will track first detected object")
+        elif key == ord('f'):  # Toggle frame flipping
+            flip_frame = not flip_frame
+            print(f"Frame flipping {'enabled' if flip_frame else 'disabled'}")
     
     cap.release()
     cv2.destroyAllWindows()
