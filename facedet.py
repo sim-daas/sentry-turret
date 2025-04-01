@@ -247,7 +247,7 @@ def main():
     
     servo_connection = setup_servo_connection()
     
-    cap = cv2.VideoCapture(1)
+    cap = cv2.VideoCapture('/dev/video2')
     
     # Get the first frame for selection
     ret, first_frame = cap.read()
