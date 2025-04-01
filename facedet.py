@@ -238,12 +238,18 @@ def main():
     model = YOLO("yolov11n-face.pt")
     
     last_command_time = 0
-    command_interval = 0.01  # Interval between servo commands
+    command_interval = 0.005  # Interval between servo commands
     prev_angle = None  # For angle smoothing
     
     # Track history for visualization
     track_history = defaultdict(lambda: [])
     max_history = 30  # Maximum history points to keep
+    
+    # FPS calculation variables
+    fps = 0
+    frame_count = 0
+    start_time = time.time()
+    fps_update_interval = 0.5  # Update FPS display every half second
     
     servo_connection = setup_servo_connection()
     
@@ -265,6 +271,16 @@ def main():
         ret, frame = cap.read()   
         if not ret:
             break
+        
+        # Update frame count for FPS calculation
+        frame_count += 1
+        elapsed_time = time.time() - start_time
+        
+        # Update FPS calculation every interval
+        if elapsed_time > fps_update_interval:
+            fps = frame_count / elapsed_time
+            frame_count = 0
+            start_time = time.time()
         
         # Get detections with tracking if enabled
         boxes, track_ids = get_face_boxes(frame, model, tracking=tracking_enabled)
@@ -298,6 +314,13 @@ def main():
         status = "Tracking: ON" if tracking_enabled else "Tracking: OFF"
         cv2.putText(frame, status, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 
                     0.7, (0, 0, 255), 2)
+        
+        # Display FPS in top right corner
+        fps_text = f"FPS: {fps:.1f}"
+        fps_text_size = cv2.getTextSize(fps_text, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2)[0]
+        fps_x = frame.shape[1] - fps_text_size[0] - 10  # 10 pixels from right edge
+        cv2.putText(frame, fps_text, (fps_x, 30), cv2.FONT_HERSHEY_SIMPLEX, 
+                    0.7, (0, 255, 255), 2)  # Yellow color for visibility
         
         cv2.imshow("Object Tracking", frame)
         
