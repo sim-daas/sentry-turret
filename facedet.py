@@ -261,7 +261,7 @@ def main():
     global xtheta, ytheta
     
     xtheta = math.tan(math.radians(30))
-    ytheta = math.tan(22)
+    ytheta = math.tan(35)
     
     model = YOLO("yolov11n-face.pt")
     
@@ -284,7 +284,7 @@ def main():
     
     servo_connection = setup_servo_connection()
     
-    cap = cv2.VideoCapture('/dev/video2')
+    cap = cv2.VideoCapture('/dev/video0')
     
     # Get the first frame for selection
     ret, first_frame = cap.read()
