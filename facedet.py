@@ -261,7 +261,7 @@ def main():
     global xtheta, ytheta
     
     xtheta = math.tan(math.radians(30))
-    ytheta = math.tan(35)
+    ytheta = math.tan(40)
     
     model = YOLO("yolov11n-face.pt")
     
@@ -271,7 +271,7 @@ def main():
     
     # Track history for visualization
     track_history = defaultdict(lambda: [])
-    max_history = 30  # Maximum history points to keep
+    max_history = 200  # Maximum history points to keep
     
     # FPS calculation variables
     fps = 0
