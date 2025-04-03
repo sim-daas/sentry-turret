@@ -115,7 +115,7 @@ def select_face_to_track(frame, model):
 
 def logic(boxes, selected_object, track_ids, prev_angle=None):
     """Calculate servo angle based on selected object position with smoothing."""
-    global xtheta
+    global xtheta, ytheta
     
     # If we have a selected object with a track_id, find it in the current boxes
     target_box = None
@@ -141,18 +141,28 @@ def logic(boxes, selected_object, track_ids, prev_angle=None):
     
     x1, y1, x2, y2 = target_box['coords']
     cent = (x1 + x2) / 2
+    ycent = (y1 + y2) / 2
     
     if cent >= 320:
         cent -= 320
-        ang = math.atan2(xtheta*cent, 220)
+        ang = math.atan2(xtheta*cent, 320)
         new_angle = 90+math.degrees(ang)
     else:
         cent = 320 - cent
-        ang = math.atan2(xtheta*cent, 220)
+        ang = math.atan2(xtheta*cent, 320)
         new_angle = 90 - math.degrees(ang)
     
+    if ycent >= 320:
+        ycent -= 320
+        ang = math.atan2(ytheta*ycent, 240)
+        new_angle1 = 90+math.degrees(ang)
+    else:
+        ycent = 320 - ycent
+        ang = math.atan2(ytheta*ycent, 240)
+        new_angle1 = 90 - math.degrees(ang)
     # Constrain angle within servo limits
     new_angle = max(10, min(170, new_angle))
+    new_angle2 = max(10, min(170, new_angle))
     
     # Apply smoothing if we have a previous angle
     if prev_angle is not None:
@@ -232,7 +242,7 @@ def send_servo_command(ser, angle):
 def main():
     global xtheta, ytheta
     
-    xtheta = math.tan(math.radians(40))
+    xtheta = math.tan(math.radians(30))
     ytheta = math.tan(22)
     
     model = YOLO("yolov11n-face.pt")
