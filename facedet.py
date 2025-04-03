@@ -113,9 +113,13 @@ def select_face_to_track(frame, model):
     return selected_object
 
 
-def logic(boxes, selected_object, track_ids, prev_angle=None):
-    """Calculate servo angle based on selected object position with smoothing."""
+def logic(boxes, selected_object, track_ids, prev_angles=None):
+    """Calculate servo angles based on selected object position with smoothing."""
     global xtheta, ytheta
+    
+    # Initialize previous angles if not provided
+    if prev_angles is None:
+        prev_angles = [90, 90]  # Default angles for pan and tilt
     
     # If we have a selected object with a track_id, find it in the current boxes
     target_box = None
@@ -131,46 +135,52 @@ def logic(boxes, selected_object, track_ids, prev_angle=None):
     if not target_box and boxes:
         target_box = boxes[0]
     
-    # If no boxes, can't calculate angle
+    # If no boxes, can't calculate angles
     if not target_box:
-        return prev_angle if prev_angle is not None else 90
+        return prev_angles
     
     # Update the selected object to maintain tracking
     if selected_object:
         selected_object.update(target_box)
     
     x1, y1, x2, y2 = target_box['coords']
-    cent = (x1 + x2) / 2
-    ycent = (y1 + y2) / 2
+    cent_x = (x1 + x2) / 2    # X center for pan (horizontal)
+    cent_y = (y1 + y2) / 2    # Y center for tilt (vertical)
     
-    if cent >= 320:
-        cent -= 320
-        ang = math.atan2(xtheta*cent, 320)
-        new_angle = 90+math.degrees(ang)
+    # Calculate pan angle (horizontal)
+    if cent_x >= 320:
+        cent_x -= 320
+        ang = math.atan2(xtheta*cent_x, 320)
+        new_angle_pan = 90 + math.degrees(ang)
     else:
-        cent = 320 - cent
-        ang = math.atan2(xtheta*cent, 320)
-        new_angle = 90 - math.degrees(ang)
+        cent_x = 320 - cent_x
+        ang = math.atan2(xtheta*cent_x, 320)
+        new_angle_pan = 90 - math.degrees(ang)
     
-    if ycent >= 320:
-        ycent -= 320
-        ang = math.atan2(ytheta*ycent, 240)
-        new_angle1 = 90+math.degrees(ang)
+    # Calculate tilt angle (vertical)
+    if cent_y >= 240:  # Assuming 480x640 resolution, vertical center is 240
+        cent_y -= 240
+        ang = math.atan2(ytheta*cent_y, 240)
+        new_angle_tilt = 90 + math.degrees(ang)
     else:
-        ycent = 320 - ycent
-        ang = math.atan2(ytheta*ycent, 240)
-        new_angle1 = 90 - math.degrees(ang)
-    # Constrain angle within servo limits
-    new_angle = max(10, min(170, new_angle))
-    new_angle2 = max(10, min(170, new_angle))
+        cent_y = 240 - cent_y
+        ang = math.atan2(ytheta*cent_y, 240)
+        new_angle_tilt = 90 - math.degrees(ang)
     
-    # Apply smoothing if we have a previous angle
-    if prev_angle is not None:
-        # Simple exponential smoothing
-        smoothing_factor = 0.3  # Lower values = more smoothing
-        new_angle = prev_angle + smoothing_factor * (new_angle - prev_angle)
+    # Constrain angles within servo limits
+    new_angle_pan = max(10, min(170, new_angle_pan))
+    new_angle_tilt = max(10, min(170, new_angle_tilt))
     
-    return new_angle
+    # Apply smoothing if we have previous angles
+    smoothing_factor = 0.3  # Lower values = more smoothing
+    
+    # Smooth pan angle
+    new_angle_pan = prev_angles[0] + smoothing_factor * (new_angle_pan - prev_angles[0])
+    
+    # Smooth tilt angle
+    new_angle_tilt = prev_angles[1] + smoothing_factor * (new_angle_tilt - prev_angles[1])
+    
+    return [new_angle_pan, new_angle_tilt]
 
 
 def draw_boxes(frame, boxes, track_history):
@@ -217,22 +227,30 @@ def setup_servo_connection(port='/dev/ttyACM0', baud_rate=9600):
         return None
 
 
-def send_servo_command(ser, angle):
-    """Send a servo position command to the Arduino."""
+def send_servo_command(ser, angles):
+    """Send servo position commands to the Arduino.
+    
+    Args:
+        ser: Serial connection object
+        angles: List containing [pan_angle, tilt_angle]
+    """
     if not ser or not ser.is_open:
         print("Serial connection not available")
         return False
         
     try:
-        if 10 <= angle <= 170:
-            # Format command with newline for Arduino to parse properly
-            command = f"{int(angle)}\n" 
+        pan_angle, tilt_angle = angles
+        
+        # Validate both angles
+        if 10 <= pan_angle <= 170 and 10 <= tilt_angle <= 170:
+            # Format command with both angles, separated by comma, with newline
+            command = f"{int(pan_angle)},{int(tilt_angle)}\n" 
             ser.write(command.encode())
             # Wait a bit for the command to be processed
             time.sleep(0.005)
             return True
         else:
-            print(f"Invalid angle value: {angle}. Must be between 10 and 170.")
+            print(f"Invalid angle values: Pan={pan_angle}, Tilt={tilt_angle}. Must be between 10 and 170.")
             return False
     except Exception as e:
         print(f"Error sending command: {e}")
@@ -249,7 +267,7 @@ def main():
     
     last_command_time = 0
     command_interval = 0.005  # Interval between servo commands
-    prev_angle = None  # For angle smoothing
+    prev_angles = [90, 90]  # Initialize with default [pan, tilt] angles
     
     # Track history for visualization
     track_history = defaultdict(lambda: [])
@@ -323,12 +341,12 @@ def main():
         
         current_time = time.time()
         if boxes and (current_time - last_command_time) >= command_interval:
-            angle = logic(boxes, selected_object, track_ids, prev_angle)
+            angles = logic(boxes, selected_object, track_ids, prev_angles)
             
-            # Send the angle to the servo
-            print(f"Sending angle: {angle:.1f}")
-            send_servo_command(servo_connection, angle)
-            prev_angle = angle
+            # Send the angles to the servos
+            print(f"Sending angles: Pan={angles[0]:.1f}, Tilt={angles[1]:.1f}")
+            send_servo_command(servo_connection, angles)
+            prev_angles = angles
             last_command_time = current_time
         
         # Display tracking status and FPS
