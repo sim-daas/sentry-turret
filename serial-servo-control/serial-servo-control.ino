@@ -29,7 +29,7 @@ void setup()
 {
   Serial.begin(9600);   // Initialize serial communication
   panServo.attach(9);   // Attaches the pan servo on pin 9
-  tiltServo.attach(10); // Attaches the tilt servo on pin 10
+  tiltServo.attach(6); // Attaches the tilt servo on pin 10
 
   panServo.write(currentPanPos); // Set initial positions
   tiltServo.write(currentTiltPos);
