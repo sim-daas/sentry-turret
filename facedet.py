@@ -9,7 +9,7 @@ import numpy as np
 
 def get_face_boxes(frame, model, tracking=False):
     if tracking:
-        results = model.track(frame, persist=True)
+        results = model.track(frame, persist=True, tracker='botsort.yml')
     else:
         results = model(frame)
     
