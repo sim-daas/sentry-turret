@@ -9,7 +9,7 @@ import numpy as np
 
 def get_face_boxes(frame, model, tracking=False):
     if tracking:
-        results = model.track(frame, persist=True, tracker='botsort.yaml')
+        results = model.track(frame, persist=True)
     else:
         results = model(frame)
     
@@ -262,6 +262,7 @@ def main():
     
     xtheta = math.tan(math.radians(30))
     ytheta = math.tan(40)
+    
     model = YOLO("yolov11n-face.pt")
     
     last_command_time = 0
