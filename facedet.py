@@ -262,7 +262,6 @@ def main():
     
     xtheta = math.tan(math.radians(30))
     ytheta = math.tan(40)
-    
     model = YOLO("yolov11n-face.pt")
     
     last_command_time = 0
