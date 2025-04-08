@@ -4,6 +4,80 @@ from ultralytics import YOLO
 import numpy as np
 import psutil
 import os
+import threading
+from queue import Queue
+
+class WebcamVideoStream:
+    """
+    Threaded webcam capture for improved performance.
+    """
+    def __init__(self, src=0, width=640, height=480):
+        # Initialize camera
+        self.stream = cv2.VideoCapture(src)
+        self.stream.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+        self.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+        
+        # Try to disable camera auto features if supported
+        self.stream.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Minimize buffer
+        self.stream.set(cv2.CAP_PROP_AUTOFOCUS, 0)  # Disable autofocus
+        
+        # Set camera to highest frame rate available
+        self.stream.set(cv2.CAP_PROP_FPS, 60)
+        
+        # Read first frame to initialize
+        (self.grabbed, self.frame) = self.stream.read()
+        
+        # Variable to control thread operation
+        self.stopped = False
+        
+        # Performance metrics
+        self.capture_times = []
+        self.last_time = time.time()
+        
+    def start(self):
+        # Start the thread
+        threading.Thread(target=self.update, args=()).start()
+        return self
+        
+    def update(self):
+        # Run indefinitely until thread is stopped
+        while not self.stopped:
+            # Record capture time
+            start_time = time.time()
+            
+            # Grab frame (separate to minimize time between frames)
+            grabbed = self.stream.grab()
+            
+            if grabbed:
+                # Decode the grabbed frame
+                _, self.frame = self.stream.retrieve()
+                
+                # Calculate and store capture time
+                capture_time = (time.time() - start_time) * 1000
+                self.capture_times.append(capture_time)
+                
+                # Keep only recent times
+                if len(self.capture_times) > 30:
+                    self.capture_times.pop(0)
+            
+            # Short sleep to prevent CPU overuse
+            time.sleep(0.001)
+            
+    def read(self):
+        # Return the current frame
+        return self.frame
+    
+    def get_capture_time(self):
+        # Return average capture time
+        if self.capture_times:
+            return sum(self.capture_times) / len(self.capture_times)
+        return 0
+        
+    def stop(self):
+        # Stop the thread and release camera
+        self.stopped = True
+        time.sleep(0.1)  # Give time for thread to finish
+        self.stream.release()
 
 def main():
     # Initialize YOLO model
@@ -24,16 +98,10 @@ def main():
         except ImportError:
             pass
     
-    # Try to set camera buffer size and properties
-    cap = cv2.VideoCapture(0)  # Change to appropriate camera index if needed
-    cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Minimize buffer (more real-time)
-    
-    # Set fixed resolution if possible (prevents auto-adjustment)
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-    
-    # Try to disable camera auto features if supported
-    cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)  # Disable autofocus
+    # Start the threaded webcam stream instead of standard capture
+    print("Starting threaded webcam stream...")
+    vs = WebcamVideoStream(src=0, width=640, height=480).start()
+    time.sleep(2.0)  # Allow camera to warm up
     
     # Create window with adjustable size
     cv2.namedWindow("YOLOv11 Face Detection", cv2.WINDOW_NORMAL)
@@ -57,21 +125,21 @@ def main():
     print("Starting detection loop with performance monitoring...")
     print("Press 'q' to quit, '+'/'-' to adjust processing scale")
     
-    while cap.isOpened():
+    while True:
         # Monitor system resources periodically
         current_time = time.time()
         if current_time - last_resource_check >= resource_check_interval:
             cpu_percent = psutil.cpu_percent()
             last_resource_check = current_time
         
-        # Use timed capture to detect camera delays
-        t1 = time.time()
-        success, frame = cap.read()
-        capture_time = (time.time() - t1) * 1000  # ms
-        
-        if not success:
+        # Get frame from threaded stream
+        frame = vs.read()
+        if frame is None:
             print("Failed to read from camera")
             break
+        
+        # Get average capture time from threaded stream
+        capture_time = vs.get_capture_time()
         
         # Update frame count for FPS calculation
         frame_count += 1
@@ -172,8 +240,8 @@ def main():
             scale_factor = max(0.1, scale_factor - 0.1)
             print(f"Scale factor: {scale_factor:.1f}")
     
-    # Cleanup
-    cap.release()
+    # Cleanup - use the thread-safe stop method
+    vs.stop()
     cv2.destroyAllWindows()
     print("Detection finished")
 
