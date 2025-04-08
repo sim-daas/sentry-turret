@@ -247,7 +247,7 @@ def send_servo_command(ser, angles):
             command = f"{int(pan_angle)},{int(tilt_angle)}\n" 
             ser.write(command.encode())
             # Wait a bit for the command to be processed
-            time.sleep(0.005)
+            time.sleep(0.001)
             return True
         else:
             print(f"Invalid angle values: Pan={pan_angle}, Tilt={tilt_angle}. Must be between 10 and 170.")
@@ -266,7 +266,7 @@ def main():
     model = YOLO("yolov11n-face.pt")
     
     last_command_time = 0
-    command_interval = 0.005  # Interval between servo commands
+    command_interval = 0.001  # Interval between servo commands
     prev_angles = [90, 90]  # Initialize with default [pan, tilt] angles
     
     # Track history for visualization
