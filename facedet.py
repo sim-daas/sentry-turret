@@ -280,7 +280,7 @@ def main():
     fps_update_interval = 0.5  # Update FPS display every half second
     
     # Frame flip control
-    flip_frame = True  # Default: no flipping
+    flip_frame = False  # Default: no flipping
     
     servo_connection = setup_servo_connection()
     
