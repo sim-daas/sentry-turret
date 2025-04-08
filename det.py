@@ -7,7 +7,7 @@ import os
 
 def main():
     # Initialize YOLO model
-    model = YOLO("yolov11s-face.pt")  # or use any other YOLOv11 model
+    model = YOLO("yolov11n-face.pt")  # or use any other YOLOv11 model
     
     # Set model parameters to optimize performance
     model.conf = 0.5       # Confidence threshold
