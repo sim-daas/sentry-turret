@@ -8,10 +8,23 @@ import numpy as np
 
 
 def get_face_boxes(frame, model, tracking=False):
-    if tracking:
-        results = model.track(frame, persist=True)
+    # Performance improvement: Reduce processing resolution
+    # Only process a smaller frame for detection (maintain display resolution)
+    height, width = frame.shape[:2]
+    if width > 640:  # Only resize if frame is large
+        scale_factor = 640 / width
+        process_frame = cv2.resize(frame, (640, int(height * scale_factor)))
     else:
-        results = model(frame)
+        process_frame = frame
+        
+    if tracking:
+        results = model.track(process_frame, persist=True)
+    else:
+        results = model(process_frame)
+    
+    # Scale boxes back to original size if we resized
+    scale_x = width / process_frame.shape[1] if process_frame.shape[1] != width else 1.0
+    scale_y = height / process_frame.shape[0] if process_frame.shape[0] != height else 1.0
     
     boxes = []
     track_ids = []
@@ -20,6 +33,8 @@ def get_face_boxes(frame, model, tracking=False):
         if result.boxes:
             for i, box in enumerate(result.boxes):
                 x1, y1, x2, y2 = map(int, box.xyxy[0])
+                x1, x2 = int(x1 * scale_x), int(x2 * scale_x)
+                y1, y2 = int(y1 * scale_y), int(y2 * scale_y)
                 conf = float(box.conf[0])
                 cls = int(box.cls[0])
                 label = result.names[cls]
@@ -185,6 +200,10 @@ def logic(boxes, selected_object, track_ids, prev_angles=None):
 
 def draw_boxes(frame, boxes, track_history):
     """Draw bounding boxes, labels, and tracking lines on the frame."""
+    # Performance optimization: Only draw recent history points (30 max)
+    # and skip drawing every other point to reduce rendering load
+    history_limit = 30
+    
     for box in boxes:
         x1, y1, x2, y2 = box['coords']
         label = f"{box['label']} {box['confidence']:.2f}"
@@ -201,10 +220,15 @@ def draw_boxes(frame, boxes, track_history):
             # Add track_id to label
             label = f"ID:{track_id} " + label
             
-            # Draw tracking line if history exists
+            # Draw tracking line if history exists (optimized)
             if track_id in track_history and len(track_history[track_id]) > 1:
-                points = np.array(track_history[track_id], dtype=np.int32).reshape((-1, 1, 2))
-                cv2.polylines(frame, [points], isClosed=False, color=(230, 230, 230), thickness=2)
+                # Only use the most recent points (up to history_limit)
+                recent_points = track_history[track_id][-history_limit:]
+                # Skip every other point to reduce drawing overhead
+                sparse_points = recent_points[::2]  
+                if len(sparse_points) > 1:
+                    points = np.array(sparse_points, dtype=np.int32).reshape((-1, 1, 2))
+                    cv2.polylines(frame, [points], isClosed=False, color=(230, 230, 230), thickness=2)
         
         cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
         cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 
@@ -266,12 +290,12 @@ def main():
     model = YOLO("yolov11n-face.pt")
     
     last_command_time = 0
-    command_interval = 0.001  # Interval between servo commands
+    command_interval = 0.03  # 30ms interval is sufficient (33Hz)
     prev_angles = [90, 90]  # Initialize with default [pan, tilt] angles
     
     # Track history for visualization
     track_history = defaultdict(lambda: [])
-    max_history = 500  # Maximum history points to keep
+    max_history = 40  # 40 points is more than enough for visualization
     
     # FPS calculation variables
     fps = 0
@@ -285,8 +309,10 @@ def main():
     servo_connection = setup_servo_connection()
     
     cap = cv2.VideoCapture('/dev/video0')
-    cap.set(cv2.CAP_PROP_FPS, 60)
-    print(cap.get(cv2.CAP_PROP_FPS))
+    
+    # Optionally reduce resolution if needed for performance
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
     
     # Get the first frame for selection
     ret, first_frame = cap.read()
@@ -303,6 +329,11 @@ def main():
     
     # Enable tracking
     tracking_enabled = True
+    
+    # Enable non-maximum suppression for the model to reduce duplicate detections
+    model.conf = 0.5       # Higher confidence threshold
+    model.iou = 0.45       # IOU threshold
+    model.max_det = 5      # Maximum detections per frame - we only need a few
     
     while cap.isOpened():
         ret, frame = cap.read() 
@@ -323,20 +354,23 @@ def main():
             frame_count = 0
             start_time = time.time()
         
-        # Get detections with tracking if enabled
-        boxes, track_ids = get_face_boxes(frame, model, tracking=tracking_enabled)
+        # Only run tracking when necessary - toggle between detection/tracking
+        # Detection is faster when you don't need to track IDs
+        should_track = tracking_enabled and (frame_count % 2 == 0)  # Only track every other frame
+        boxes, track_ids = get_face_boxes(frame, model, tracking=should_track)
         
-        # Update track history for visualization
-        for box in boxes:
-            if box.get('track_id') is not None:
-                track_id = box['track_id']
-                x1, y1, x2, y2 = box['coords']
-                center_x, center_y = (x1 + x2) // 2, (y1 + y2) // 2
-                
-                track_history[track_id].append((center_x, center_y))
-                # Keep only recent history
-                if len(track_history[track_id]) > max_history:
-                    track_history[track_id].pop(0)
+        # Only update track history every other frame to reduce overhead
+        if frame_count % 2 == 0:
+            for box in boxes:
+                if box.get('track_id') is not None:
+                    track_id = box['track_id']
+                    x1, y1, x2, y2 = box['coords']
+                    center_x, center_y = (x1 + x2) // 2, (y1 + y2) // 2
+                    
+                    track_history[track_id].append((center_x, center_y))
+                    # Use a smaller max history
+                    if len(track_history[track_id]) > max_history:
+                        track_history[track_id].pop(0)
         
         # Draw all detections and tracks
         frame = draw_boxes(frame, boxes, track_history)
