@@ -21,15 +21,14 @@ const float MAX_SPEED = 6.0;        // Maximum speed in degrees per update inter
 float Kp = 0.25;                    // Proportional gain - reduced to prevent oscillation
 const float MIN_ANGLE_CHANGE = 4.0; // Minimum change in angle to process
 
-// More efficient buffer size
-const int BUFFER_SIZE = 20;
-char inputBuffer[BUFFER_SIZE];
-int bufferPos = 0;
+// Buffer for incoming data
+String inputBuffer = "";
+boolean commandComplete = false;
 
 void setup()
 {
-  Serial.begin(9600);  // Initialize serial communication
-  panServo.attach(9);  // Attaches the pan servo on pin 9
+  Serial.begin(9600);   // Initialize serial communication
+  panServo.attach(9);   // Attaches the pan servo on pin 9
   tiltServo.attach(6); // Attaches the tilt servo on pin 10
 
   panServo.write(currentPanPos); // Set initial positions
@@ -40,24 +39,77 @@ void setup()
 
   // Clear any startup jitter
   delay(500);
-
-  // Increase serial buffer size to prevent missed commands
-  Serial.setTimeout(10); // 10ms timeout is sufficient
 }
 
 void loop()
 {
-  // More efficient serial reading using readBytesUntil
-  if (Serial.available() > 0)
+  // Process serial input
+  while (Serial.available() > 0)
   {
-    // Read until newline, more efficient than character-by-character
-    bufferPos = Serial.readBytesUntil('\n', inputBuffer, BUFFER_SIZE - 1);
-    if (bufferPos > 0)
+    char inChar = (char)Serial.read();
+
+    // If it's a digit or comma, add to buffer
+    if (isDigit(inChar) || inChar == ',')
     {
-      inputBuffer[bufferPos] = '\0'; // Null terminate the string
-      processCommand();
-      bufferPos = 0; // Reset buffer position
+      inputBuffer += inChar;
+      lastCommandTime = millis();
     }
+    // If it's a newline or carriage return, process the command
+    else if (inChar == '\n' || inChar == '\r')
+    {
+      commandComplete = true;
+    }
+  }
+
+  // If command is complete or we've timed out with data in the buffer
+  if (commandComplete ||
+      (inputBuffer.length() > 0 && millis() - lastCommandTime > COMMAND_TIMEOUT))
+  {
+    if (inputBuffer.length() > 0)
+    {
+      // Parse two comma-separated values for pan and tilt
+      int commaIndex = inputBuffer.indexOf(',');
+
+      if (commaIndex > 0)
+      {
+        // Two values provided
+        String panAngleStr = inputBuffer.substring(0, commaIndex);
+        String tiltAngleStr = inputBuffer.substring(commaIndex + 1);
+
+        int newPanTarget = panAngleStr.toInt();
+        int newTiltTarget = tiltAngleStr.toInt();
+
+        // Constrain within safe limits
+        newPanTarget = constrain(newPanTarget, SERVO_MIN, SERVO_MAX);
+        newTiltTarget = constrain(newTiltTarget, SERVO_MIN, SERVO_MAX);
+
+        // Only update if the changes are significant
+        if (abs(newPanTarget - targetPanPos) >= MIN_ANGLE_CHANGE)
+        {
+          targetPanPos = newPanTarget;
+        }
+
+        if (abs(newTiltTarget - targetTiltPos) >= MIN_ANGLE_CHANGE)
+        {
+          targetTiltPos = newTiltTarget;
+        }
+      }
+      else
+      {
+        // Fallback to single value (pan only) for backward compatibility
+        int newTarget = inputBuffer.toInt();
+        newTarget = constrain(newTarget, SERVO_MIN, SERVO_MAX);
+
+        if (abs(newTarget - targetPanPos) >= MIN_ANGLE_CHANGE)
+        {
+          targetPanPos = newTarget;
+        }
+      }
+    }
+
+    // Clear the buffer and reset command status
+    inputBuffer = "";
+    commandComplete = false;
   }
 
   // Update servo positions at regular intervals
@@ -71,51 +123,6 @@ void loop()
 
     // Update tilt servo
     updateServoPosition(tiltServo, targetTiltPos, currentTiltPos);
-  }
-}
-
-void processCommand()
-{
-  // Process the command from inputBuffer
-  String command = String(inputBuffer);
-
-  // Parse two comma-separated values for pan and tilt
-  int commaIndex = command.indexOf(',');
-
-  if (commaIndex > 0)
-  {
-    // Two values provided
-    String panAngleStr = command.substring(0, commaIndex);
-    String tiltAngleStr = command.substring(commaIndex + 1);
-
-    int newPanTarget = panAngleStr.toInt();
-    int newTiltTarget = tiltAngleStr.toInt();
-
-    // Constrain within safe limits
-    newPanTarget = constrain(newPanTarget, SERVO_MIN, SERVO_MAX);
-    newTiltTarget = constrain(newTiltTarget, SERVO_MIN, SERVO_MAX);
-
-    // Only update if the changes are significant
-    if (abs(newPanTarget - targetPanPos) >= MIN_ANGLE_CHANGE)
-    {
-      targetPanPos = newPanTarget;
-    }
-
-    if (abs(newTiltTarget - targetTiltPos) >= MIN_ANGLE_CHANGE)
-    {
-      targetTiltPos = newTiltTarget;
-    }
-  }
-  else
-  {
-    // Fallback to single value (pan only) for backward compatibility
-    int newTarget = command.toInt();
-    newTarget = constrain(newTarget, SERVO_MIN, SERVO_MAX);
-
-    if (abs(newTarget - targetPanPos) >= MIN_ANGLE_CHANGE)
-    {
-      targetPanPos = newTarget;
-    }
   }
 }
 
