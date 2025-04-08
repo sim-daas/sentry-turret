@@ -2,6 +2,8 @@ import cv2
 import time
 from ultralytics import YOLO
 import numpy as np
+import psutil
+import os
 
 def main():
     # Initialize YOLO model
@@ -12,34 +14,67 @@ def main():
     model.iou = 0.45       # NMS IOU threshold
     model.max_det = 20     # Maximum number of detections
     
-    # Open webcam
+    # Additional performance settings
+    torch_threads = os.cpu_count()
+    if torch_threads:
+        try:
+            import torch
+            torch.set_num_threads(torch_threads)
+            print(f"Torch using {torch_threads} threads")
+        except ImportError:
+            pass
+    
+    # Try to set camera buffer size and properties
     cap = cv2.VideoCapture(0)  # Change to appropriate camera index if needed
+    cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Minimize buffer (more real-time)
+    
+    # Set fixed resolution if possible (prevents auto-adjustment)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+    
+    # Try to disable camera auto features if supported
+    cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)  # Disable autofocus
+    
+    # Create window with adjustable size
+    cv2.namedWindow("YOLOv11 Face Detection", cv2.WINDOW_NORMAL)
+    cv2.resizeWindow("YOLOv11 Face Detection", 1280, 720)
     
     # FPS calculation variables
     fps = 0
     frame_count = 0
     start_time = time.time()
     fps_update_interval = 0.5  # Update FPS every half second
-    
-    # Create window with adjustable size
-    cv2.namedWindow("YOLOv11 Face Detection", cv2.WINDOW_NORMAL)
-    cv2.resizeWindow("YOLOv11 Face Detection", 1280, 720)
+    fps_history = []  # Track FPS over time
     
     # Processing resolution scaling
     scale_factor = 1.0  # 1.0 = original size, 0.5 = half size, etc.
     
-    print("Starting detection loop...")
+    # Advanced performance monitoring
+    cpu_percent = 0
+    last_resource_check = 0
+    resource_check_interval = 1.0  # Check system resources every second
+    
+    print("Starting detection loop with performance monitoring...")
     print("Press 'q' to quit, '+'/'-' to adjust processing scale")
     
     while cap.isOpened():
+        # Monitor system resources periodically
+        current_time = time.time()
+        if current_time - last_resource_check >= resource_check_interval:
+            cpu_percent = psutil.cpu_percent()
+            last_resource_check = current_time
+        
+        # Use timed capture to detect camera delays
+        t1 = time.time()
         success, frame = cap.read()
+        capture_time = (time.time() - t1) * 1000  # ms
+        
         if not success:
             print("Failed to read from camera")
             break
         
         # Update frame count for FPS calculation
         frame_count += 1
-        current_time = time.time()
         elapsed_time = current_time - start_time
         
         # Record original frame dimensions for display
@@ -93,11 +128,34 @@ def main():
         inf_text = f"Inference: {inference_time:.1f}ms"
         scale_text = f"Scale: {scale_factor:.2f}x"
         
+        # Add additional performance metrics
+        cap_text = f"Capture: {capture_time:.1f}ms"
+        cpu_text = f"CPU: {cpu_percent}%"
+        
+        # Record FPS for analysis
+        if elapsed_time > fps_update_interval:
+            fps_history.append(fps)
+            # Keep last 60 samples (30 seconds worth)
+            if len(fps_history) > 60:
+                fps_history.pop(0)
+            
+            # Calculate FPS stability
+            if len(fps_history) > 5:
+                fps_std = np.std(fps_history[-5:])
+                fps_var_text = f"FPS Var: {fps_std:.1f}"
+                cv2.putText(display_frame, fps_var_text, (10, 150), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
+        
+        # Show performance info
         cv2.putText(display_frame, fps_text, (10, 30), 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
         cv2.putText(display_frame, inf_text, (10, 60), 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
-        cv2.putText(display_frame, scale_text, (10, 90), 
+        cv2.putText(display_frame, cap_text, (10, 90), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
+        cv2.putText(display_frame, cpu_text, (10, 120), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
+        cv2.putText(display_frame, scale_text, (10, 150), 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
         
         # Show the frame
