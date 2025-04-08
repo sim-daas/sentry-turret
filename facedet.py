@@ -271,7 +271,7 @@ def main():
     
     # Track history for visualization
     track_history = defaultdict(lambda: [])
-    max_history = 500  # Maximum history points to keep
+    max_history = 50  # Maximum history points to keep
     
     # FPS calculation variables
     fps = 0
