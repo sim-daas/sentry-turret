@@ -14,28 +14,52 @@ def main():
         # Clear any data in the buffer
         ser.reset_input_buffer()
 
+        # Print instructions
+        print("\nTest multiple servo modes:")
+        print("1. Enter a single value (e.g. '90') to control just the pan servo")
+        print("2. Enter two comma-separated values (e.g. '90,45') to control both pan and tilt servos")
+        print("Enter 'q' to quit at any time\n")
+
         while True:
-            # Ask user for pulse width value
+            # Ask user for angle values
             try:
-                pulse = input("Enter angle (10-170 degrees) or 'q' to quit: ")
+                input_text = input("Enter angle(s) (10-170 degrees) [pan] or [pan,tilt] or 'q' to quit: ")
 
                 # Check if user wants to quit
-                if pulse.lower() == 'q':
+                if input_text.lower() == 'q':
                     break
 
-                # Convert input to integer and validate range
-                pulse_value = int(pulse)
-                if 10 <= pulse_value <= 170:
-                    # Send the angle value to Arduino with newline terminator
-                    ser.write(f"{pulse_value}\n".encode())
-
-                    # Read and print the response from Arduino
-                    time.sleep(0.1)  # Wait for Arduino to respond
+                # Check if input contains a comma (dual servo mode)
+                if ',' in input_text:
+                    # Split the input and parse both values
+                    pan_str, tilt_str = input_text.split(',', 1)
+                    pan_angle = int(pan_str.strip())
+                    tilt_angle = int(tilt_str.strip())
+                    
+                    # Validate both angles
+                    if 10 <= pan_angle <= 170 and 10 <= tilt_angle <= 170:
+                        # Format command for both servos
+                        command = f"{pan_angle},{tilt_angle}\n"
+                        print(f"Sending: Pan={pan_angle}°, Tilt={tilt_angle}°")
+                        ser.write(command.encode())
+                    else:
+                        print("Invalid value! Both angles must be between 10 and 170 degrees.")
                 else:
-                    print("Invalid value! Please enter a number between 10 and 170.")
+                    # Single servo mode (backward compatibility)
+                    pan_angle = int(input_text)
+                    if 10 <= pan_angle <= 170:
+                        # Send just the pan angle (Arduino will use default for tilt)
+                        command = f"{pan_angle}\n"
+                        print(f"Sending: Pan={pan_angle}° (single servo mode)")
+                        ser.write(command.encode())
+                    else:
+                        print("Invalid value! Please enter a number between 10 and 170.")
+
+                # Wait for Arduino to process
+                time.sleep(0.1)
 
             except ValueError:
-                print("Please enter a valid number.")
+                print("Please enter valid numbers in the format: [pan] or [pan,tilt]")
             except KeyboardInterrupt:
                 print("\nExiting...")
                 break
