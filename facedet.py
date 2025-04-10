@@ -140,11 +140,11 @@ def logic(boxes, selected_object, ids, prev_angles=None):
     if cy >= 240:
         cy -= 240
         ang = math.atan2(yth*cy, 240)
-        tilt_angle = 90 - math.degrees(ang)
+        tilt_angle = 90 + math.degrees(ang)
     else:
         cy = 240 - cy
         ang = math.atan2(yth*cy, 240)
-        tilt_angle = 90 + math.degrees(ang)
+        tilt_angle = 90 - math.degrees(ang)
     
     pan_angle = max(10, min(170, pan_angle))
     tilt_angle = max(10, min(170, tilt_angle))
