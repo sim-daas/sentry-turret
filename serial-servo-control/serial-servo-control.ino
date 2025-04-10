@@ -9,7 +9,7 @@ int tgtPanPos = 90;
 int tgtTltPos = 90;
 
 unsigned long lstMvTm;
-unsigned long lstCmdTm;
+unsigned long lstCmdTm; 
 const int MVTHRESH = 3;
 const int SRVMIN = 10;
 const int SRVMAX = 170;
