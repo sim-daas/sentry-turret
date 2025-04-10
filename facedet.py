@@ -131,11 +131,11 @@ def logic(boxes, selected_object, ids, prev_angles=None):
     if cx >= 320:
         cx -= 320
         ang = math.atan2(xth*cx, 320)
-        pan_angle = 90 + math.degrees(ang)
+        pan_angle = 90 - math.degrees(ang)
     else:
         cx = 320 - cx
         ang = math.atan2(xth*cx, 320)
-        pan_angle = 90 - math.degrees(ang)
+        pan_angle = 90 + math.degrees(ang)
     
     if cy >= 240:
         cy -= 240
