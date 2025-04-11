@@ -219,7 +219,7 @@ def main():
     global xth, yth
     
     xth = math.tan(math.radians(35))
-    yth = math.tan(30)
+    yth = math.tan(math.radians(30))
     
     model = YOLO("yolov11n-face.pt")
     
