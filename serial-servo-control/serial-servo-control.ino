@@ -18,7 +18,7 @@ const int CMDTMO = 100;
 const int UPDINTV = 20;
 const float MAXSPD = 6.0;
 float Kp = 0.25;
-const float MINANGCHG = 4.0;
+const float MINANGCHG = 2.0;
 
 String inBuf = "";
 boolean cmdCmplt = false;

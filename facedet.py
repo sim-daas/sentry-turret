@@ -218,8 +218,8 @@ def send_servo_command(ser, angles):
 def main():
     global xth, yth
     
-    xth = math.tan(math.radians(40))
-    yth = math.tan(40)
+    xth = math.tan(math.radians(35))
+    yth = math.tan(30)
     
     model = YOLO("yolov11n-face.pt")
     
