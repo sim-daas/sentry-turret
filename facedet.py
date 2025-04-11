@@ -290,11 +290,11 @@ def main():
             send_servo_command(servo_connection, angles)
             prev_angles = angles
             last_cmd_time = current_time
-        
+
 '''        status = "Tracking: ON" if tracking_enabled else "Tracking: OFF"
         cv2.putText(frame, status, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 
                     0.7, (0, 0, 255), 2) '''
-        
+
         fps_txt = f"FPS: {fps:.1f}"
         fps_sz = cv2.getTextSize(fps_txt, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2)[0]
         fps_x = frame.shape[1] - fps_sz[0] - 10
