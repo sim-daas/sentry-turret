@@ -356,7 +356,7 @@ def main():
     global xth, yth
 
     xth = math.tan(math.radians(35))
-    yth = math.tan(math.radians(30))
+    yth = math.tan(math.radians(25))
 
     known_embs = load_face_db()
     # known_faces stores status per track ID:
@@ -507,8 +507,8 @@ def main():
                     # Should not happen if logic is correct, but default to OFF
                     laser_en = 0
 
-                # print(f"Target TID: {target_tid}, Status: {known_faces.get(target_tid, {}).get('status')}, Known: {known_faces.get(target_tid, {}).get('is_known')}, Laser: {laser_en}")
-                # print(f"Sending angles: Pan={angles[0]:.1f}, Tilt={angles[1]:.1f}, Laser={laser_en}")
+                # Print the angles and laser status before sending
+                print(f"Sending angles: Pan={angles[0]:.1f}, Tilt={angles[1]:.1f}, Laser={laser_en}")
                 send_servo_command(servo_connection, angles, laser_en)
                 prev_angles = angles
                 last_cmd_time = current_time
